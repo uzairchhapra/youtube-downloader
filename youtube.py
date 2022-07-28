@@ -1,12 +1,17 @@
 from pytube import YouTube
 import getopt, sys
 from pytube.exceptions import RegexMatchError
+from pytube.cli import on_progress
+
+def progress(chunk,file_handler,bytes_remaining):
+    print(chunk)
 
 argumentList = sys.argv[1:]
 options = "ha:f:"
 long_options = ["help", "audio", "folder="]
 audioOnly = False
 urlProvided=''
+path=''
 
 try:
     arguments, values = getopt.getopt(argumentList, options, long_options)
@@ -50,13 +55,16 @@ except getopt.error as err:
 
 if urlProvided:
     try:
-        yt = YouTube(urlProvided)
+        yt = YouTube(urlProvided,on_progress_callback=on_progress)
+        if not path:
+            path='.'
 
         if audioOnly:
             saved=yt.streams.get_audio_only().download(output_path=path)
             print(f'Downloaded Audio and Saved here: {saved}')
         else:
             saved= yt.streams.get_highest_resolution().download(output_path=path)
+            # saved= yt.streams.get_highest_resolution().on_progress(progress)
             print(f'Downloaded Video and Saved here: {saved}')
 
     except RegexMatchError as r:
@@ -64,6 +72,7 @@ if urlProvided:
 
     except OSError as o:
         print(f'{o.strerror}: {o.filename}')
-        
-    except Exception as e:
-        print('Unknown error occured.')
+
+    # except Exception as e:
+    #     print(repr(e))
+    #     print('Unknown error occured.')
